@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 const StudentModel = require("../models/student.model");
-const AdminModel = require("../models/instructor.model");
 const bcrypt = require("bcrypt");
 const InstructorModel = require("../models/instructor.model");
 
@@ -35,22 +34,79 @@ const signin = async (req, res, next) => {
     console.log("Password matched");
 
     const accessToken = await jwt.sign(
-      user.toJSON(),
+      { id: user.id, role: user.role, name: user.username },
       process.env.JWT_ACCESS_TOKEN_SECRET,
       { expiresIn: "1h" }
     );
 
+    const refreshToken = await jwt.sign(
+      { id: user.id, role: user.role, name: user.username },
+      process.env.JWT_REFRESH_TOKEN_SECRET,
+      { expiresIn: "7d" }
+    );
+
     console.log("accessToken", accessToken);
+    console.log("refreshToken", refreshToken);
 
     res.status(200).json({
       status: "Success",
       message: "Login successful",
-      token: accessToken,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
       role: instructor != null ? "instructor" : "student",
       user: {
         id: user._id,
         username: user.username,
       },
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: "error",
+      message: "Error occured",
+    });
+  }
+};
+
+const refreshAccessToken = async (req, res, next) => {
+  try {
+    const { id, token } = req.body;
+
+    const user = await InstructorModel.findById(id) || await StudentModel.findById(id);
+
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
+
+    if (!token) {
+      return res.status(400).json({
+        status: "error",
+        message: "Token is required",
+      });
+    }
+
+    jwt.verify(token, process.env.JWT_REFRESH_TOKEN_SECRET, (err, user) => {
+      if (err) {
+        return res.status(403).json({
+          status: "error",
+          message: "Invalid token",
+        });
+      }
+
+      const newAccessToken = jwt.sign(
+        { id: user.id, role: user.role, name: user.username },
+        process.env.JWT_ACCESS_TOKEN_SECRET,
+        { expiresIn: "1h" }
+      );
+
+      res.status(200).json({
+        status: "success",
+        message: "Token refreshed successfully",
+        token: newAccessToken,
+      });
     });
   } catch (error) {
     console.log(error);
@@ -177,5 +233,6 @@ const instructorSignup = async (req, res, next) => {
 module.exports = {
   signin,
   studentsignup,
-  instructorSignup
+  instructorSignup,
+  refreshAccessToken
 };
