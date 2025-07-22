@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const AdminSchema = new mongoose.Schema(
+const InstructorSchema = new mongoose.Schema(
   {
     id: {
       type: mongoose.Schema.Types.ObjectId,
@@ -19,6 +19,6 @@ const AdminSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const AdminModel = mongoose.model("admins", AdminSchema);
+const InstructorModel = mongoose.model("instructors", InstructorSchema);
 
-module.exports = AdminModel;
+module.exports = InstructorModel;

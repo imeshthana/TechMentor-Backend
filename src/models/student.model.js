@@ -6,7 +6,7 @@ const StudentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       auto: true,
     },
-    fullName: {
+    fullname: {
       type: String,
       required: true,
     },

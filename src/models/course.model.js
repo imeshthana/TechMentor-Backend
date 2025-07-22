@@ -24,15 +24,21 @@ const CourseSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    instructor: {
+    instructor_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "instructor",
+      required: true,
+    },
+    instructor_name: {
       type: String,
       required: true,
     },
-    syllabus: {
+    content: {
       type: [
         {
           type: String,
-          required: true,},
+          required: true,
+        },
       ],
       required: true,
     },

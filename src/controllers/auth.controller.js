@@ -1,17 +1,18 @@
 const jwt = require("jsonwebtoken");
 const StudentModel = require("../models/student.model");
-const AdminModel = require("../models/admin.model");
+const AdminModel = require("../models/instructor.model");
 const bcrypt = require("bcrypt");
+const InstructorModel = require("../models/instructor.model");
 
 const signin = async (req, res, next) => {
   try {
     const { username, password } = req.body;
     console.log(req.body);
 
-    const admin = await AdminModel.findOne({ username });
+    const instructor = await InstructorModel.findOne({ username });
     const student = await StudentModel.findOne({ username });
 
-    const user = admin || student;
+    const user = instructor || student;
 
     if (!user) {
       console.log("User not found");
@@ -21,7 +22,7 @@ const signin = async (req, res, next) => {
       });
     }
 
-    const passwordMatched = await bcrypt.compare(password, admin.passwordHash);
+    const passwordMatched = await bcrypt.compare(password, user.passwordHash);
 
     if (passwordMatched == false) {
       console.log("Password doesn't match");
@@ -34,7 +35,7 @@ const signin = async (req, res, next) => {
     console.log("Password matched");
 
     const accessToken = await jwt.sign(
-      admin.toJSON(),
+      user.toJSON(),
       process.env.JWT_ACCESS_TOKEN_SECRET,
       { expiresIn: "1h" }
     );
@@ -45,7 +46,7 @@ const signin = async (req, res, next) => {
       status: "Success",
       message: "Login successful",
       token: accessToken,
-      role: admin ? "admin" : "student",
+      role: instructor != null ? "instructor" : "student",
       user: {
         id: user._id,
         username: user.username,
@@ -62,14 +63,14 @@ const signin = async (req, res, next) => {
 
 const studentsignup = async (req, res, next) => {
   try {
-    const { fullName, username, email, phone, password } = req.body;
+    const { fullname, username, email, phone, password } = req.body;
     console.log(req.body);
 
-    if (!password || !email || !phone || !username || !fullName) {
+    if (!password || !email || !phone || !username || !fullname) {
       console.log("Required fields incomplete");
       return res.status(400).json({
         status: "error",
-        message: "Admin creating unsuccessful",
+        message: "Student creating unsuccessful",
       });
     }
 
@@ -89,7 +90,7 @@ const studentsignup = async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const newStudent = new StudentModel({
-      fullName,
+      fullname,
       email,
       phone,
       username,
@@ -108,7 +109,7 @@ const studentsignup = async (req, res, next) => {
         student: {
           id: savedStudent._id,
           email: savedStudent.email,
-          fullName: savedStudent.fullName,
+          fullname: savedStudent.fullname,
           phone: savedStudent.phone,
         },
       });
@@ -122,7 +123,7 @@ const studentsignup = async (req, res, next) => {
   }
 };
 
-const adminsignup = async (req, res, next) => {
+const instructorSignup = async (req, res, next) => {
   try {
     const { username, password } = req.body;
     console.log(req.body);
@@ -134,10 +135,10 @@ const adminsignup = async (req, res, next) => {
         message: "Admin creating unsuccessful",
       });
     }
-    const admin = await AdminModel.findOne({
+    const instructor = await InstructorModel.findOne({
       $or: [{ username }],
     });
-    if (admin) {
+    if (instructor) {
       console.log("Admin already exists");
       return res.status(400).json({
         status: "error",
@@ -146,21 +147,21 @@ const adminsignup = async (req, res, next) => {
     }
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const newAdmin = new AdminModel({
+    const newInstructor = new InstructorModel({
       username,
       passwordHash: hashedPassword,
     });
-    const savedAdmin = await newAdmin.save();
-    console.log("Admin created successfully");
+    const savedInstructor = await newInstructor.save();
+    console.log("Instructor created successfully");
 
-    console.log(savedAdmin);
-    if (savedAdmin) {
+    console.log(savedInstructor);
+    if (savedInstructor) {
       res.status(200).json({
         status: "Success",
-        message: "Admin created successfully",
-        admin: {
-          id: savedAdmin._id,
-          username: savedAdmin.username,
+        message: "Instructor created successfully",
+        instructor: {
+          id: savedInstructor._id,
+          username: savedInstructor.username,
         },
       });
     }
@@ -176,5 +177,5 @@ const adminsignup = async (req, res, next) => {
 module.exports = {
   signin,
   studentsignup,
-  adminsignup,
+  instructorSignup
 };
