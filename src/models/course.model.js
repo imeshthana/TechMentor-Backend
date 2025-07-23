@@ -2,10 +2,6 @@ const mongoose = require("mongoose");
 
 const CourseSchema = new mongoose.Schema(
   {
-    id: {
-      type: mongoose.Schema.Types.ObjectId,
-      auto: true,
-    },
     _isActive: {
       type: Boolean,
       required: true,
@@ -19,6 +15,7 @@ const CourseSchema = new mongoose.Schema(
     title: {
       type: String,
       required: true,
+      unique: true,
     },
     description: {
       type: String,

@@ -69,7 +69,7 @@ const refreshAccessToken = async (req, res, next) => {
     const { id, token } = req.body;
 
     const user =
-      (await InstructorModel.findById(id)) || (await StudentModel.findById(id));
+      await UserModel.findById(id);
 
     if (!user) {
       return res.status(404).json({

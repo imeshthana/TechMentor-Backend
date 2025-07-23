@@ -11,11 +11,11 @@ const authenticateAuth = require("../middleware/auth.middleware");
 
 const courseRouter = Router();
 
-courseRouter.post("/add", authenticateAuth, addCourse);
-courseRouter.put("/edit/:id",authenticateAuth, editCourse);
-courseRouter.delete("/delete/:id",authenticateAuth, deleteCourse);
-courseRouter.get("/get", getAllCourses);
-courseRouter.get("/get/:id", getOneCourse);
+courseRouter.post("/", authenticateAuth, addCourse);
+courseRouter.put("/:id",authenticateAuth, editCourse);
+courseRouter.delete("/:id",authenticateAuth, deleteCourse);
+courseRouter.get("/", authenticateAuth, getAllCourses);
+courseRouter.get("/:id", authenticateAuth, getOneCourse);
 courseRouter.post("/enroll/:id", authenticateAuth, enrollInCourse);
 
 module.exports = courseRouter;

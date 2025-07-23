@@ -32,7 +32,7 @@ const addCourse = async (req, res, next) => {
       title: data.title,
       description: data.description,
       instructor_id: data.instructor_id,
-      instructor_name: data.instructor_name,
+      instructor_name: instructor.fullname,
       content: data.content,
     });
 
@@ -134,26 +134,32 @@ const deleteCourse = async (req, res, next) => {
 
 const getAllCourses = async (req, res, next) => {
   try {
-    const courses = await CourseModel.find();
+    const courses = await CourseModel.find({ _isDeleted: { $ne: true } });
+    const { id } = req.body;
 
-    const allCourses = await Promise.all(
-      courses.map(async (course) => {
-        if (course._isDeleted) {
-          return;
-        }
+    const student = await UserModel.findById(id).populate("courses");
 
-        const courseDetail = {
-          id: course._id,
-          title: course.title,
-          description: course.description,
-          content: course.content,
-          instructor_id: course.instructor_id,
-          instructor_name: course.instructor_name,
-        };
+    if (!student) {
+      console.log("Student not found");
+      return res.status(404).json({
+        status: "error",
+        message: "Student not found",
+      });
+    }
 
-        return courseDetail;
-      })
+    const enrolledCourseIds = student.courses.map((course) =>
+      course._id.toString()
     );
+
+    const allCourses = courses.map((course) => ({
+      id: course._id,
+      title: course.title,
+      description: course.description,
+      content: course.content,
+      instructor_id: course.instructor_id,
+      instructor_name: course.instructor_name,
+      enrolled: enrolledCourseIds.includes(course._id.toString()),
+    }));
 
     if (allCourses.length == 0) {
       console.log("Courses not found");
@@ -179,6 +185,21 @@ const getAllCourses = async (req, res, next) => {
 const getOneCourse = async (req, res, next) => {
   try {
     const courseId = req.params.id;
+    const { id } = req.body;
+
+    const student = await UserModel.findById(id).populate("courses");
+
+    if (!student) {
+      console.log("Student not found");
+      return res.status(404).json({
+        status: "error",
+        message: "Student not found",
+      });
+    }
+
+    const enrolledCourseIds = student.courses.map((course) =>
+      course._id.toString()
+    );
 
     const course = await CourseModel.findById(courseId);
     if (!course) {
@@ -203,6 +224,7 @@ const getOneCourse = async (req, res, next) => {
       instructor_name: course.instructor_name,
       content: course.content,
       isActive: course._isActive,
+      enrolled: enrolledCourseIds.includes(course._id.toString())
     };
     console.log("Course found successfully");
     return res.status(200).json({
@@ -241,9 +263,7 @@ const enrollInCourse = async (req, res, next) => {
       });
     }
 
-    const student = await UserModel.findById(userId).populate(
-      "courses"
-    );
+    const student = await UserModel.findById(userId).populate("courses");
 
     if (!student) {
       console.log("Student not found");
