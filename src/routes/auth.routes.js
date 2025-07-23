@@ -1,16 +1,16 @@
 const { Router } = require("express");
 const {
   signin,
-  studentsignup,
-  instructorSignup,
+  register,
+  getProfile,
   refreshAccessToken
 } = require("../controllers/auth.controller");
 
 const authRouter = Router();
 
 authRouter.post("/signin", signin);
-authRouter.post("/signup/student", studentsignup);
-authRouter.post("/signup/instructor", instructorSignup);
+authRouter.post("/register", register);
 authRouter.post("/refresh", refreshAccessToken);
+authRouter.get("/profile/:id", getProfile);
 
 module.exports = authRouter;

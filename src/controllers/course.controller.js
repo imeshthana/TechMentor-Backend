@@ -1,5 +1,5 @@
 const CourseModel = require("../models/course.model");
-const StudentModel = require("../models/student.model");
+const UserModel = require("../models/user.model");
 
 const addCourse = async (req, res, next) => {
   try {
@@ -18,6 +18,16 @@ const addCourse = async (req, res, next) => {
       });
     }
 
+    const instructor = await UserModel.findById(data.instructor_id);
+
+    if (!instructor) {
+      console.log("Instructor not found");
+      return res.status(404).json({
+        status: "error",
+        message: "Instructor not found",
+      });
+    }
+
     const newCourse = new CourseModel({
       title: data.title,
       description: data.description,
@@ -25,6 +35,9 @@ const addCourse = async (req, res, next) => {
       instructor_name: data.instructor_name,
       content: data.content,
     });
+
+    instructor.courses.push(newCourse._id);
+    await instructor.save();
 
     const result = await newCourse.save();
 
@@ -210,7 +223,7 @@ const enrollInCourse = async (req, res, next) => {
     const courseId = req.params.id;
     const userId = req.body.id;
 
-    console.log(userId)
+    console.log(userId);
 
     const course = await CourseModel.findById(courseId);
     if (!course) {
@@ -228,8 +241,8 @@ const enrollInCourse = async (req, res, next) => {
       });
     }
 
-    const student = await StudentModel.findById(userId).populate(
-      "enrolledCourses"
+    const student = await UserModel.findById(userId).populate(
+      "courses"
     );
 
     if (!student) {
@@ -240,14 +253,14 @@ const enrollInCourse = async (req, res, next) => {
       });
     }
 
-    if (student.enrolledCourses.includes(courseId)) {
+    if (student.courses.includes(courseId)) {
       console.log("Already enrolled in this course");
       return res.status(400).json({
         status: "error",
         message: "Already enrolled in this course",
       });
     }
-    student.enrolledCourses.push(courseId);
+    student.courses.push(courseId);
     await student.save();
     console.log("Enrolled in course successfully");
 

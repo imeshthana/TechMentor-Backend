@@ -1,12 +1,11 @@
-const InstructorModel = require("../models/instructor.model");
 const CourseModel = require("../models/course.model");
-const StudentModel = require("../models/student.model");
+const UserModel = require("../models/user.model");
 
 const getInstructorCourses = async (req, res, next) => {
   try {
     const instructorId = req.params.id;
 
-    const user = await InstructorModel.findById(instructorId);
+    const user = await UserModel.findById(instructorId);
 
     if (!user) {
       console.log("User not found");
@@ -21,14 +20,15 @@ const getInstructorCourses = async (req, res, next) => {
       _isDeleted: false,
     });
 
-    const students = await StudentModel.find({
-      enrolledCourses: { $exists: true, $ne: [] },
-    });
+    const students = await UserModel.find({
+      courses: { $exists: true, $ne: [] },
+      role: "student",
+    }).populate("courses");
 
     const courseData = courses.map((course) => {
       const enrolledStudents = students
         .filter((student) =>
-          student.enrolledCourses.some((cId) => cId.equals(course._id))
+          student.courses.some((cId) => cId.equals(course._id))
         )
         .map((student) => ({
           id: student._id,

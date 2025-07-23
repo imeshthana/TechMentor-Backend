@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const StudentSchema = new mongoose.Schema(
+const UserSchema = new mongoose.Schema(
   {
     id: {
       type: mongoose.Schema.Types.ObjectId,
@@ -27,15 +27,20 @@ const StudentSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    enrolledCourses: {
+    role: {
+      type: String,
+      enum: ["student", "instructor"],
+      required: true,
+    },
+    courses: {
       type: [mongoose.Schema.Types.ObjectId],
-        ref: "course",
-        default: [],
-      },
+      ref: "course",
+      default: [],
+    },
   },
   { timestamps: true }
 );
 
-const StudentModel = mongoose.model("students", StudentSchema);
+const UserModel = mongoose.model("users", UserSchema);
 
-module.exports = StudentModel;
+module.exports = UserModel;

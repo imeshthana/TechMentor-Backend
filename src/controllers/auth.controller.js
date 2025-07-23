@@ -1,17 +1,13 @@
 const jwt = require("jsonwebtoken");
-const StudentModel = require("../models/student.model");
 const bcrypt = require("bcrypt");
-const InstructorModel = require("../models/instructor.model");
+const UserModel = require("../models/user.model");
 
 const signin = async (req, res, next) => {
   try {
     const { username, password } = req.body;
     console.log(req.body);
 
-    const instructor = await InstructorModel.findOne({ username });
-    const student = await StudentModel.findOne({ username });
-
-    const user = instructor || student;
+    const user = await UserModel.findOne({ username });
 
     if (!user) {
       console.log("User not found");
@@ -53,7 +49,7 @@ const signin = async (req, res, next) => {
       message: "Login successful",
       accessToken: accessToken,
       refreshToken: refreshToken,
-      role: instructor != null ? "instructor" : "student",
+      role: user.role,
       user: {
         id: user._id,
         username: user.username,
@@ -72,7 +68,8 @@ const refreshAccessToken = async (req, res, next) => {
   try {
     const { id, token } = req.body;
 
-    const user = await InstructorModel.findById(id) || await StudentModel.findById(id);
+    const user =
+      (await InstructorModel.findById(id)) || (await StudentModel.findById(id));
 
     if (!user) {
       return res.status(404).json({
@@ -117,24 +114,31 @@ const refreshAccessToken = async (req, res, next) => {
   }
 };
 
-const studentsignup = async (req, res, next) => {
+const register = async (req, res, next) => {
   try {
-    const { fullname, username, email, phone, password } = req.body;
+    const { fullname, username, email, phone, password, role } = req.body;
     console.log(req.body);
 
-    if (!password || !email || !phone || !username || !fullname) {
+    if (!password || !email || !phone || !username || !fullname || !role) {
       console.log("Required fields incomplete");
       return res.status(400).json({
         status: "error",
         message: "Student creating unsuccessful",
       });
     }
+    if (role !== "student" && role !== "instructor") {
+      console.log("Invalid role");
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid role",
+      });
+    }
 
-    const student = await StudentModel.findOne({
+    const user = await UserModel.findOne({
       $or: [{ username }],
     });
 
-    if (student) {
+    if (user) {
       console.log("User already exists");
       return res.status(400).json({
         status: "error",
@@ -145,28 +149,27 @@ const studentsignup = async (req, res, next) => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    const newStudent = new StudentModel({
+    const newUser = new UserModel({
       fullname,
       email,
       phone,
       username,
+      role,
       passwordHash: hashedPassword,
     });
 
-    const savedStudent = await newStudent.save();
+    const savedUser = await newUser.save();
 
-    console.log("Student created successfully");
-    console.log(savedStudent);
+    console.log("User created successfully");
+    console.log(savedUser);
 
-    if (savedStudent) {
+    if (savedUser) {
       res.status(200).json({
         status: "Success",
-        message: "Student created successfully",
-        student: {
-          id: savedStudent._id,
-          email: savedStudent.email,
-          fullname: savedStudent.fullname,
-          phone: savedStudent.phone,
+        message: "User created successfully",
+        user: {
+          id: savedUser._id,
+          fullname: savedUser.fullname,
         },
       });
     }
@@ -179,48 +182,32 @@ const studentsignup = async (req, res, next) => {
   }
 };
 
-const instructorSignup = async (req, res, next) => {
+const getProfile = async (req, res, next) => {
   try {
-    const { username, password } = req.body;
-    console.log(req.body);
+    const id = req.params.id;
 
-    if (!password || !username) {
-      console.log("Required fields incomplete");
-      return res.status(400).json({
-        status: "error",
-        message: "Admin creating unsuccessful",
-      });
-    }
-    const instructor = await InstructorModel.findOne({
-      $or: [{ username }],
-    });
-    if (instructor) {
-      console.log("Admin already exists");
-      return res.status(400).json({
-        status: "error",
-        message: "Admin already exists",
-      });
-    }
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const newInstructor = new InstructorModel({
-      username,
-      passwordHash: hashedPassword,
-    });
-    const savedInstructor = await newInstructor.save();
-    console.log("Instructor created successfully");
+    const user = await UserModel.findById(id);
 
-    console.log(savedInstructor);
-    if (savedInstructor) {
-      res.status(200).json({
-        status: "Success",
-        message: "Instructor created successfully",
-        instructor: {
-          id: savedInstructor._id,
-          username: savedInstructor.username,
-        },
+    if (!user) {
+      console.log("User not found");
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
       });
     }
+
+    res.status(200).json({
+      status: "Success",
+      message: "Profile found successfully",
+      user: {
+        fullname: user.fullname,
+        email: user.email,
+        courses: user.courses,
+        phone: user.phone,
+        role: user.role,
+        id: user._id,
+      },
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
@@ -232,7 +219,7 @@ const instructorSignup = async (req, res, next) => {
 
 module.exports = {
   signin,
-  studentsignup,
-  instructorSignup,
-  refreshAccessToken
+  register,
+  refreshAccessToken,
+  getProfile,
 };
