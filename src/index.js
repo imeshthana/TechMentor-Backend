@@ -30,7 +30,7 @@ app.get("/", (req, res, next) => {
   }
 });
 
-app.use("/v1/api", router);
+app.use("/api/v1", router);
 console.log("Routes loaded successfully");
 
 mongoose

@@ -12,7 +12,7 @@ const addCourse = async (req, res, next) => {
 
     if (course) {
       console.log("Course already added");
-      return res.status(400).json({
+      return res.status(401).json({
         status: "error",
         message: "Course already added",
       });
@@ -254,7 +254,7 @@ const enrollInCourse = async (req, res, next) => {
 
     return res.status(200).json({
       status: "success",
-      message: `Successfully enrolled in course ${courseId}`,
+      message: `Successfully enrolled`,
     });
   } catch (error) {
     console.log(error);

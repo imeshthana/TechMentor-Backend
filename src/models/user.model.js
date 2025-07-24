@@ -33,6 +33,10 @@ const UserSchema = new mongoose.Schema(
       ref: "course",
       default: [],
     },
+    refresh: {
+      type: String,
+      default: null,
+    }
   },
   { timestamps: true }
 );

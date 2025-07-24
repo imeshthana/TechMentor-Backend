@@ -32,7 +32,7 @@ const signin = async (req, res, next) => {
     const accessToken = await jwt.sign(
       { id: user.id, role: user.role, name: user.username },
       process.env.JWT_ACCESS_TOKEN_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "5m" }
     );
 
     const refreshToken = await jwt.sign(
@@ -44,6 +44,9 @@ const signin = async (req, res, next) => {
     console.log("accessToken", accessToken);
     console.log("refreshToken", refreshToken);
 
+    user.refresh = refreshToken;
+    await user.save();
+
     res.status(200).json({
       status: "Success",
       message: "Login successful",
@@ -52,7 +55,7 @@ const signin = async (req, res, next) => {
       role: user.role,
       user: {
         id: user._id,
-        username: user.username,
+        name: user.fullname,
       },
     });
   } catch (error) {
@@ -68,8 +71,7 @@ const refreshAccessToken = async (req, res, next) => {
   try {
     const { id, token } = req.body;
 
-    const user =
-      await UserModel.findById(id);
+    const user = await UserModel.findById(id);
 
     if (!user) {
       return res.status(404).json({
@@ -85,25 +87,23 @@ const refreshAccessToken = async (req, res, next) => {
       });
     }
 
-    jwt.verify(token, process.env.JWT_REFRESH_TOKEN_SECRET, (err, user) => {
-      if (err) {
-        return res.status(403).json({
-          status: "error",
-          message: "Invalid token",
-        });
-      }
-
-      const newAccessToken = jwt.sign(
-        { id: user.id, role: user.role, name: user.username },
-        process.env.JWT_ACCESS_TOKEN_SECRET,
-        { expiresIn: "1h" }
-      );
-
-      res.status(200).json({
-        status: "success",
-        message: "Token refreshed successfully",
-        token: newAccessToken,
+    if (user.refresh !== token) {
+      return res.status(403).json({
+        status: "error",
+        message: "Invalid token",
       });
+    }
+
+    const newAccessToken = jwt.sign(
+      { id: user.id, role: user.role, name: user.username },
+      process.env.JWT_ACCESS_TOKEN_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    res.status(200).json({
+      status: "success",
+      message: "Token refreshed successfully",
+      token: newAccessToken,
     });
   } catch (error) {
     console.log(error);
@@ -166,10 +166,10 @@ const register = async (req, res, next) => {
     if (savedUser) {
       res.status(200).json({
         status: "Success",
-        message: "User created successfully",
+        message: "Registration successful",
         user: {
           id: savedUser._id,
-          fullname: savedUser.fullname,
+          name: savedUser.fullname,
         },
       });
     }
