@@ -15,12 +15,14 @@ const getEnrolledCourses = async (req, res, next) => {
       });
     }
 
-    const enrolledCourses = await Promise.all(
+    var enrolledCourses = await Promise.all(
       user.courses.map(async (courseId) => {
         const course = await CourseModel.findById(courseId);
         return course;
       })
     );
+
+    enrolledCourses = enrolledCourses.filter((course) => course !== null);
 
     res.status(200).json({
       status: "success",

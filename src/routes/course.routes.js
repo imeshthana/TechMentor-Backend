@@ -14,8 +14,8 @@ const courseRouter = Router();
 courseRouter.post("/", authenticateAuth, addCourse);
 courseRouter.put("/:id",authenticateAuth, editCourse);
 courseRouter.delete("/:id",authenticateAuth, deleteCourse);
-courseRouter.get("/", authenticateAuth, getAllCourses);
-courseRouter.get("/:id", authenticateAuth, getOneCourse);
+courseRouter.get("/", getAllCourses);
+courseRouter.get("/:id", getOneCourse);
 courseRouter.post("/enroll/:id", authenticateAuth, enrollInCourse);
 
 module.exports = courseRouter;
