@@ -32,7 +32,7 @@ const signin = async (req, res, next) => {
     const accessToken = await jwt.sign(
       { id: user.id, role: user.role, name: user.username },
       process.env.JWT_ACCESS_TOKEN_SECRET,
-      { expiresIn: "5m" }
+      { expiresIn: "1d" }
     );
 
     const refreshToken = await jwt.sign(
