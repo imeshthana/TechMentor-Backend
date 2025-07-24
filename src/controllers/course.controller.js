@@ -135,21 +135,6 @@ const deleteCourse = async (req, res, next) => {
 const getAllCourses = async (req, res, next) => {
   try {
     const courses = await CourseModel.find({ _isDeleted: { $ne: true } });
-    const { id } = req.body;
-
-    const student = await UserModel.findById(id).populate("courses");
-
-    if (!student) {
-      console.log("Student not found");
-      return res.status(404).json({
-        status: "error",
-        message: "Student not found",
-      });
-    }
-
-    const enrolledCourseIds = student.courses.map((course) =>
-      course._id.toString()
-    );
 
     const allCourses = courses.map((course) => ({
       id: course._id,
@@ -158,7 +143,6 @@ const getAllCourses = async (req, res, next) => {
       content: course.content,
       instructor_id: course.instructor_id,
       instructor_name: course.instructor_name,
-      enrolled: enrolledCourseIds.includes(course._id.toString()),
     }));
 
     if (allCourses.length == 0) {
@@ -185,22 +169,7 @@ const getAllCourses = async (req, res, next) => {
 const getOneCourse = async (req, res, next) => {
   try {
     const courseId = req.params.id;
-    const { id } = req.body;
-
-    const student = await UserModel.findById(id).populate("courses");
-
-    if (!student) {
-      console.log("Student not found");
-      return res.status(404).json({
-        status: "error",
-        message: "Student not found",
-      });
-    }
-
-    const enrolledCourseIds = student.courses.map((course) =>
-      course._id.toString()
-    );
-
+    
     const course = await CourseModel.findById(courseId);
     if (!course) {
       console.log("Course not found");
@@ -223,8 +192,7 @@ const getOneCourse = async (req, res, next) => {
       instructor_id: course.instructor_id,
       instructor_name: course.instructor_name,
       content: course.content,
-      isActive: course._isActive,
-      enrolled: enrolledCourseIds.includes(course._id.toString())
+      isActive: course._isActive
     };
     console.log("Course found successfully");
     return res.status(200).json({
